@@ -38,4 +38,54 @@ int main(int argc, char** argv)
 		std::cout << "Failed to find decryptors" << std::endl;
 		return 1;
 	}
+
+	const pubg::decryptor_list& decryptors = result.value();
+
+	std::cout << "Found decryptors:" << std::endl;
+
+	auto& [fname_index, fname_number, object_index, object_class, object_outer] = decryptors;
+
+	if (fname_index->is_valid() && fname_number->is_valid()) {
+		std::cout << "FName index decryptor:" << std::endl;
+		std::cout << "ROR: " << (fname_index->ror ? "true" : "false") << std::endl;
+		std::cout << "XOR key: " << std::hex << fname_index->xor_key[0] << ", " << fname_index->xor_key[1] << std::endl;
+		std::cout << "ROR value: " << std::dec << (int)fname_index->rval << std::endl;
+		std::cout << "SHR/SHL value: " << (int)fname_index->sval << std::endl;
+		std::cout << "Offset: " << (int)fname_index->offset << std::endl;
+		std::cout << std::endl;
+
+		std::cout << "FName number decryptor:" << std::endl;
+		std::cout << "ROR: " << (fname_number->ror ? "true" : "false") << std::endl;
+		std::cout << "XOR key: " << std::hex << fname_number->xor_key[0] << ", " << fname_number->xor_key[1] << std::endl;
+		std::cout << "ROR value: " << std::dec << (int)fname_number->rval << std::endl;
+		std::cout << "SHR/SHL value: " << (int)fname_number->sval << std::endl;
+		std::cout << "Offset: " << (int)fname_number->offset << std::endl;
+		std::cout << std::endl;
+	}
+
+	if (object_index->is_valid() && object_class->is_valid() && object_outer->is_valid()) {
+		std::cout << "Object index decryptor:" << std::endl;
+		std::cout << "ROR: " << (object_index->ror ? "true" : "false") << std::endl;
+		std::cout << "XOR key: " << std::hex << object_index->xor_key[0] << ", " << object_index->xor_key[1] << std::endl;
+		std::cout << "ROR value: " << std::dec << (int)object_index->rval << std::endl;
+		std::cout << "SHR/SHL value: " << (int)object_index->sval << std::endl;
+		std::cout << "Offset: " << (int)object_index->offset << std::endl;
+		std::cout << std::endl;
+
+		std::cout << "Object class decryptor:" << std::endl;
+		std::cout << "ROR: " << (object_class->ror ? "true" : "false") << std::endl;
+		std::cout << "XOR key: " << std::hex << object_class->xor_key[0] << ", " << object_class->xor_key[1] << std::endl;
+		std::cout << "ROR value: " << std::dec << (int)object_class->rval << std::endl;
+		std::cout << "SHR/SHL value: " << (int)object_class->sval << std::endl;
+		std::cout << "Offset: " << (int)object_class->offset << std::endl;
+		std::cout << std::endl;
+
+		std::cout << "Object outer decryptor:" << std::endl;
+		std::cout << "ROR: " << (object_outer->ror ? "true" : "false") << std::endl;
+		std::cout << "XOR key: " << std::hex << object_outer->xor_key[0] << ", " << object_outer->xor_key[1] << std::endl;
+		std::cout << "ROR value: " << std::dec << (int)object_outer->rval << std::endl;
+		std::cout << "SHR/SHL value: " << (int)object_outer->sval << std::endl;
+		std::cout << "Offset: " << (int)object_outer->offset << std::endl;
+		std::cout << std::endl;
+	}
 }
