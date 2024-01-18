@@ -7,6 +7,9 @@ std::optional<pubg::Decryptor<T>> get_decryptor(const ZydisDecoder& decoder, uin
 
 	Analyser analyser(decoder, start, end, result);
 
+	if (!analyser.init())
+		return std::nullopt;
+
 	auto analysed = analyser.get_result();
 	if (!analysed.has_value())
 		return std::nullopt;
@@ -85,7 +88,7 @@ std::optional<std::pair<pubg::Decryptor32, pubg::Decryptor32>> get_fname_decrypt
 
 std::optional<std::pair<pubg::Decryptor64, pubg::Decryptor64>> get_class_object_decryptors(const ZydisDecoder& decoder, uintptr_t start) {
 	uintptr_t end = start;
-	for (size_t i = 0; i < 3; i++)
+	for (size_t i = 0; i < 3 && end; i++)
 		end = find_instruction_mnemonic(decoder, end + Instruction(decoder, end).instruction.length, start + 0x100, ZYDIS_MNEMONIC_XOR);
 	if (!end)
 		return std::nullopt;
@@ -93,7 +96,7 @@ std::optional<std::pair<pubg::Decryptor64, pubg::Decryptor64>> get_class_object_
 	auto outer = get_decryptor<int64_t>(decoder, start, end, outer_result);
 
 	start = end;
-	for (size_t i = 0; i < 3; i++)
+	for (size_t i = 0; i < 3 && end; i++)
 		end = find_instruction_mnemonic(decoder, end + Instruction(decoder, end).instruction.length, start + 0x100, ZYDIS_MNEMONIC_XOR);
 	if (!end)
 		return std::nullopt;
@@ -119,6 +122,11 @@ std::optional<pubg::decryptor_list> pubg::get_decryptors(const ZydisDecoder& dec
 	// https://imgur.com/a/vd2KfNc
 	// 4D 85 C0 0F 95 C0 84 C0 <--- the setnz stuff at the top
 	// to find the decryptor
+
+	std::optional<std::pair<pubg::Decryptor32, pubg::Decryptor32>> fname_decryptors;
+	std::optional<std::pair<pubg::Decryptor64, pubg::Decryptor64>> class_outer_decryptors;
+	std::optional<pubg::Decryptor32> object_index_decryptor;
+
 	uintptr_t offset = start;
 	while (offset < end) { // try all signature matches
 		uintptr_t decryptors_address = (uintptr_t)FindSignature((void*)offset, (void*)end, "4D 85 C0 0F 95 C0 84 C0");
@@ -129,26 +137,33 @@ std::optional<pubg::decryptor_list> pubg::get_decryptors(const ZydisDecoder& dec
 		decryptors_address = find_instruction_category(decoder, decryptors_address, decryptors_address + 0x100, ZYDIS_CATEGORY_COND_BR);
 		if (!decryptors_address)
 			continue;
-		auto fname_decryptors = get_fname_decryptors(decoder, decryptors_address);
+		fname_decryptors = get_fname_decryptors(decoder, decryptors_address);
 
 		Instruction instr(decoder, decryptors_address);
 		uintptr_t class_decryptor_address = decryptors_address + instr.operands[0].imm.value.s + instr.instruction.length; // jmp address
-		auto class_outer_decryptors = get_class_object_decryptors(decoder, class_decryptor_address);
+		class_outer_decryptors = get_class_object_decryptors(decoder, class_decryptor_address);
 		if (!fname_decryptors.has_value() || !class_outer_decryptors.has_value())
 			continue;
 
-		uintptr_t object_index_address = (uintptr_t)FindSignature((void*)start, (void*)end, "E8 ? ? ? ? 48 89 87 ? ? ? ? 48 85 C0 0F 84 ? ? ? ? 8B 40");
+		break;
+	}
+
+
+	offset = start;
+	while (offset < end) { // try all signature matches
+		uintptr_t object_index_address = (uintptr_t)FindSignature((void*)offset, (void*)end, "E8 ? ? ? ? 48 89 87 ? ? ? ? 48 85 C0 0F 84 ? ? ? ? 8B 40");
 		if (!object_index_address)
 			return std::nullopt;
-		auto object_index_decryptor = get_object_index_decryptor(decoder, object_index_address);
+		offset = object_index_address + 23;
+
+		object_index_decryptor = get_object_index_decryptor(decoder, object_index_address);
 		if (!object_index_decryptor.has_value())
-			return std::nullopt;
+			continue;
 
-		//fname_decryptors->first.print();
-		//fname_decryptors->second.print();
-		//class_outer_decryptors->second.print();
-		//class_outer_decryptors->second.print();
+		break;
+	}
 
+	if (fname_decryptors.has_value() && object_index_decryptor.has_value() && class_outer_decryptors.has_value()) {
 		return pubg::decryptor_list{
 			std::make_unique<pubg::Decryptor32>(fname_decryptors->first),
 			std::make_unique<pubg::Decryptor32>(fname_decryptors->second),
@@ -157,5 +172,7 @@ std::optional<pubg::decryptor_list> pubg::get_decryptors(const ZydisDecoder& dec
 			std::make_unique<pubg::Decryptor64>(class_outer_decryptors->second),
 		};
 	}
-	return std::nullopt;
+	else {
+		return std::nullopt;
+	}
 }

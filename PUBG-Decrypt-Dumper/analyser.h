@@ -51,7 +51,9 @@ public:
 	* @param result The location of the result
 	*
 	*/
-	Analyser(const ZydisDecoder& decoder, uintptr_t start, uintptr_t end, location result);
+	Analyser(const ZydisDecoder& decoder, uintptr_t start, uintptr_t end, location result) : decoder(decoder), start(start), end(end), result(result) {}
+
+	bool init();
 
 	std::optional<std::pair<std::vector<InstructionTrace>, location>> get_result() const;
 private:
@@ -60,4 +62,9 @@ private:
 
 	// filled in by "mark_needed_instructions"
 	std::vector<location> unknown_values;
+
+	const ZydisDecoder& decoder;
+	const uintptr_t start;
+	const uintptr_t end;
+	const location result;
 };

@@ -42,11 +42,13 @@ void Analyser::mark_needed_instructions(size_t current_instruction) {
 					|| (last_modified.value() == current_instruction && current_instruction == 0)) {
 					unknown_values.push_back(loc.value());
 					instruction.unknown_value = true; // just for debugging purposes (print the instruction)
-				} else if (last_modified.value() == current_instruction) {
+				}
+				else if (last_modified.value() == current_instruction) {
 					auto prev_last_modified = get_last_modified(instructions[current_instruction - 1], loc.value());
 					if (prev_last_modified.has_value())
 						mark_needed_instructions(prev_last_modified.value());
-				} else
+				}
+				else
 					mark_needed_instructions(last_modified.value());
 			}
 		}
@@ -76,7 +78,9 @@ std::optional<size_t> Analyser::get_last_modified(const InstructionTrace& instru
 	return std::nullopt;
 }
 
-Analyser::Analyser(const ZydisDecoder& decoder, uintptr_t start, uintptr_t end, location result) {
+
+bool Analyser::init()
+{
 	if (std::holds_alternative<ZydisRegister>(result))
 		printf("Analyzing %s\n", ZydisRegisterGetString(std::get<ZydisRegister>(result)));
 	else {
@@ -115,10 +119,11 @@ Analyser::Analyser(const ZydisDecoder& decoder, uintptr_t start, uintptr_t end, 
 	}
 
 	auto loc = get_last_modified(instructions.back(), result);
-	if (loc.has_value())
-		mark_needed_instructions(loc.value());
-	else
-		throw std::exception("Result not found");
+	if (!loc.has_value())
+		return false;
+
+	mark_needed_instructions(loc.value());
+	return true;
 }
 
 std::optional<std::pair<std::vector<InstructionTrace>, location>> Analyser::get_result() const {
