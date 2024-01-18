@@ -147,7 +147,7 @@ std::optional<std::pair<std::vector<InstructionTrace>, location>> Analyser::get_
 		if (instruction.needed)
 			needed.push_back(instruction);
 	}
-	printf("\033[0m\n");
+	printf("\033[0m");
 
 	if (unknown_values.size() == 0)
 		return std::nullopt;
@@ -157,11 +157,13 @@ std::optional<std::pair<std::vector<InstructionTrace>, location>> Analyser::get_
 		// make sure unknown instructions contain the same location
 		for (const auto& l : unknown_values) {
 			if (!is_same_location(l, loc)) {
-				printf("Error: unknown values contain different locations\n");
+				printf("Error: unknown values contain different locations\n\n");
 				return std::nullopt;
 			}
 		}
 	}
+
+	printf("\n");
 
 	return std::pair{ needed, loc };
 }
