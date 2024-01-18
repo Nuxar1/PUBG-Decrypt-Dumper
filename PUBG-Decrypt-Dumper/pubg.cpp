@@ -137,7 +137,7 @@ std::optional<pubg::decryptor_list> pubg::get_decryptors(const ZydisDecoder& dec
 		if (!fname_decryptors.has_value() || !class_outer_decryptors.has_value())
 			continue;
 
-		uintptr_t object_index_address = (uintptr_t)FindSignature((void*)start, (void*)end, "E8 ? ? ? ? 48 89 87 ? ? ? ? 48 85 C0 0F 84 ? ? ? ? 8B 40 20");
+		uintptr_t object_index_address = (uintptr_t)FindSignature((void*)start, (void*)end, "E8 ? ? ? ? 48 89 87 ? ? ? ? 48 85 C0 0F 84 ? ? ? ? 8B 40");
 		if (!object_index_address)
 			return std::nullopt;
 		auto object_index_decryptor = get_object_index_decryptor(decoder, object_index_address);
