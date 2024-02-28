@@ -102,6 +102,11 @@ std::optional<std::pair<pubg::Decryptor64, pubg::Decryptor64>> get_class_object_
 		return std::nullopt;
 	const auto& class_result = Instruction(decoder, end).operands[0].reg.value;
 	auto _class = get_decryptor<int64_t>(decoder, start, end, class_result);
+	if (!_class.has_value() || !outer.has_value())
+		return std::nullopt;
+
+	if (_class.value().xor_key[0] == outer.value().xor_key[0])
+		return std::nullopt;
 
 	return std::pair{ _class.value(), outer.value() };
 }
