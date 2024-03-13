@@ -2,6 +2,7 @@
 #include "analyser.h"
 #include <vector>
 #include <memory>
+#include <string>
 #include <optional>
 
 #define NAME_SIZE 1024
@@ -40,6 +41,13 @@ namespace pubg
 				result = ror ? _rotr(encrypted ^ xor_key[0], rval) : _rotl(encrypted ^ xor_key[0], rval);
 
 			return result ^ (result << sval) ^ xor_key[1];
+		}
+
+		operator std::string() const {
+			char buffer[0x100];
+			sprintf_s(buffer, 0x100, "ROR: %s\nXOR key: 0x%X, 0x%X\nROR value: %d\nSHR/SHL value: %d\nOffset: %d\n",
+								ror ? "true" : "false", xor_key[0], xor_key[1], rval, sval, offset);
+			return std::string(buffer);
 		}
 	};
 
